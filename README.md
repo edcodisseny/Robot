@@ -14,3 +14,12 @@ whereis Arduino
 ### Mac
 A Mac la carpeta d'Arduino la pots trobar als programes instalats, i modificar les llibreries amb clic dret i seleccionant "Mostrar contingut del paquet".
 
+## Connexions
+
+
+## Exemples
+A la llibreria es poden trobar diferents exemples:
+### Infrarrojos
+### Motors
+### MotorsIndividuals
+### Ultrasons
