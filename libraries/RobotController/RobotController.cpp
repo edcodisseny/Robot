@@ -12,12 +12,79 @@ PCF8574 IRSensors(I2C_INFRA);  // add switches to lines  	(used as input)
 PCF8574 MotorController(I2C_MOTORS);  // add LEDs to lines  (used as output)
 uint8_t _motorStatus = 0;
 
+
+/**
+ * Divides a given PWM pin frequency by a divisor.
+ * 
+ * The resulting frequency is equal to the base frequency divided by
+ * the given divisor:
+ *   - Base frequencies:
+ *      o The base frequency for pins 3, 9, 10, and 11 is 31250 Hz.
+ *      o The base frequency for pins 5 and 6 is 62500 Hz.
+ *   - Divisors:
+ *      o The divisors available on pins 5, 6, 9 and 10 are: 1, 8, 64,
+ *        256, and 1024.
+ *      o The divisors available on pins 3 and 11 are: 1, 8, 32, 64,
+ *        128, 256, and 1024.
+ * 
+ * PWM frequencies are tied together in pairs of pins. If one in a
+ * pair is changed, the other is also changed to match:
+ *   - Pins 5 and 6 are paired on timer0
+ *   - Pins 9 and 10 are paired on timer1
+ *   - Pins 3 and 11 are paired on timer2
+ * 
+ * Note that this function will have side effects on anything else
+ * that uses timers:
+ *   - Changes on pins 3, 5, 6, or 11 may cause the delay() and
+ *     millis() functions to stop working. Other timing-related
+ *     functions may also be affected.
+ *   - Changes on pins 9 or 10 will cause the Servo library to function
+ *     incorrectly.
+ * 
+ * Thanks to macegr of the Arduino forums for his documentation of the
+ * PWM frequency divisors. His post can be viewed at:
+ *   http://forum.arduino.cc/index.php?topic=16612#msg121031
+ */
+void setPwmFrequency(int pin, int divisor) {
+  byte mode;
+  if(pin == 5 || pin == 6 || pin == 9 || pin == 10) {
+    switch(divisor) {
+      case 1: mode = 0x01; break;
+      case 8: mode = 0x02; break;
+      case 64: mode = 0x03; break;
+      case 256: mode = 0x04; break;
+      case 1024: mode = 0x05; break;
+      default: return;
+    }
+    if(pin == 5 || pin == 6) {
+      TCCR0B = TCCR0B & 0b11111000 | mode;
+    } else {
+      TCCR1B = TCCR1B & 0b11111000 | mode;
+    }
+  } else if(pin == 3 || pin == 11) {
+    switch(divisor) {
+      case 1: mode = 0x01; break;
+      case 8: mode = 0x02; break;
+      case 32: mode = 0x03; break;
+      case 64: mode = 0x04; break;
+      case 128: mode = 0x05; break;
+      case 256: mode = 0x06; break;
+      case 1024: mode = 0x07; break;
+      default: return;
+    }
+    TCCR2B = TCCR2B & 0b11111000 | mode;
+  }
+}
+
 void RobotBegin(){
 	pinMode(BUTTON_START, INPUT_PULLUP);   	
 	pinMode(PWM_CONTROL_FRONT_LEFT, OUTPUT);   	// Sets the (analog) pin as output
 	pinMode(PWM_CONTROL_BACK_LEFT, OUTPUT);   	// Sets the (analog) pin as output
 	pinMode(PWM_CONTROL_FRONT_RIGHT, OUTPUT);   // Sets the (analog) pin as output
 	pinMode(PWM_CONTROL_BACK_RIGHT, OUTPUT);   	// Sets the (analog) pin as output
+	setPwmFrequency(5, 256);	// 244.140625 Hz to pin 5 & 6
+	setPwmFrequency(9, 256);	// 122.0703125 Hz to pin 9 & 10
+	setPwmFrequency(3, 256);	// 244.140625 Hz to pin 3 & 11
 	MotorController.begin(0);										// Set the initial status of the motors (off)
 	_motorStatus = 0;
 	MotorController.write8(_motorStatus);				// TO DO: Set the initial status of the motors (off)
@@ -179,18 +246,11 @@ void vIR(bool *bBR,bool *bBL,bool *bFSL,bool *bFL,bool *bFC,bool *bFR,bool *bFSR
 	*bFSR = (byIr >> 6) & 0x01;
 }
 
-void gotoxy(int x,int y){
-	char sz[12];
-	
-    sprintf(sz,"%c[%d;%df",0x1B,y,x);Serial.println(sz);
-}
-
 void vShowIR(bool bBR,bool bBL,bool bFSL,bool bFL,bool bFC,bool bFR,bool bFSR){
   char sz[12];int i;
 
-  //for(i = 0; i < 5; i++)
-  //  Serial.println();
-  gotoxy(1,2);
+  for(i = 0; i < 5; i++)
+    Serial.println();
   Serial.println(" /----/^\\----\\");
   sprintf(sz,    " |%c  %c %c %c  %c|",bFSL?'W':'B',bFL?'W':'B',bFC?'W':'B',bFR?'W':'B',bFSR?'W':'B');Serial.println(sz);
   Serial.println("[ ]    ^    [ ]");
@@ -211,9 +271,8 @@ void vShowRobot(bool bBR,bool bBL,bool bFSL,bool bFL,bool bFC,bool bFR,bool bFSR
   char cBR = (_motorStatus & 0x01) ? '^' : (_motorStatus & 0x02) ? 'v' : ' ';
   char cBL = (_motorStatus & 0x08) ? '^' : (_motorStatus & 0x04) ? 'v' : ' ';
   
-  //for(i = 0; i < 5; i++)
-  //  Serial.println();
-  gotoxy(1,2);
+  for(i = 0; i < 5; i++)
+    Serial.println();
   Serial.print("    { "); Serial.print(nUsDist,DEC);Serial.println(" cm }");
   Serial.println(" /----/^\\----\\");
   sprintf(sz,    " |%c  %c %c %c  %c|",bFSL?'W':'B',bFL?'W':'B',bFC?'W':'B',bFR?'W':'B',bFSR?'W':'B');Serial.println(sz);
