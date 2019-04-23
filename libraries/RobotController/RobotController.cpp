@@ -6,7 +6,6 @@
 
 #include "RobotController.h"
 
-
 //See http://www.ti.com/lit/ds/symlink/pcf8574a.pdf
 PCF8574 IRSensors(I2C_INFRA);  // add switches to lines  	(used as input)
 PCF8574 MotorController(I2C_MOTORS);  // add LEDs to lines  (used as output)
@@ -87,7 +86,7 @@ void RobotBegin(){
 	setPwmFrequency(3, 256);	// 244.140625 Hz to pin 3 & 11
 	MotorController.begin(0);										// Set the initial status of the motors (off)
 	_motorStatus = 0;
-	MotorController.write8(_motorStatus);				// TO DO: Set the initial status of the motors (off)
+	MotorController.write8(_motorStatus);				// 
 }
 
 uint8_t statusMotor(){
@@ -322,3 +321,4 @@ int nUltrasonicCm(){
 		
 	return nGd;
 }
+

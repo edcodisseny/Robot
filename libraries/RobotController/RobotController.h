@@ -10,8 +10,22 @@
 #include "Arduino.h"
 #include <Wire.h>
 #include "PCF8574.h"
+// Pantalla OLED
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
-#define VERSION 0.04
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+#define OLED_RESET     4 // Reset pin # (or -1 if sharing Arduino reset pin)
+
+
+#ifndef DISPLAY_I2C
+#define DISPLAY_I2C 0x3C
+#endif DISPLAY_I2C
+
+#define VERSION 0.05
 
 #define M_RIGHT_FRONT_1 0x01
 #define M_RIGHT_FRONT_2 0x02
@@ -33,8 +47,6 @@
 #define INFRA_6 0x20
 #define INFRA_7 0x40
 
-//#define I2C_INFRA 0x73
-//#define I2C_MOTORS 0x70
 #define I2C_INFRA 0x39
 #define I2C_MOTORS 0x38
 
@@ -75,7 +87,7 @@ void vShowIR(bool bBR,bool bBL,bool bFSL,bool bFL,bool bFC,bool bFR,bool bFSR);
 void vShowRobot(bool bBR,bool bBL,bool bFSL,bool bFL,bool bFC,bool bFR,bool bFSR,int nUsDist);
 
 //* ULTRASONIC SENSOR
-int getDistance();	//
+int getDistance();	
 int nUltrasonicCm();
 
 uint8_t statusMotor();
