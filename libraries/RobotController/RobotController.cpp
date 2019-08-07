@@ -28,7 +28,7 @@ uint8_t _motorStatus = 0;
  * 
  * PWM frequencies are tied together in pairs of pins. If one in a
  * pair is changed, the other is also changed to match:
- *   - Pins 5 and 6 are paired on timer0
+ *   - Pins 5 and 6 are paired on timer0 	// Modify millis function
  *   - Pins 9 and 10 are paired on timer1
  *   - Pins 3 and 11 are paired on timer2
  * 
@@ -81,9 +81,14 @@ void RobotBegin(){
 	pinMode(PWM_CONTROL_BACK_LEFT, OUTPUT);   	// Sets the (analog) pin as output
 	pinMode(PWM_CONTROL_FRONT_RIGHT, OUTPUT);   // Sets the (analog) pin as output
 	pinMode(PWM_CONTROL_BACK_RIGHT, OUTPUT);   	// Sets the (analog) pin as output
+#ifdef ROBOT20
+	setPwmFrequency(5, 64);	// 976.5625 Hz to pin 5 & 6 timer
+	setPwmFrequency(9, 64);	// 488.28125 Hz to pin 9 & 10
+#else
 	setPwmFrequency(5, 256);	// 244.140625 Hz to pin 5 & 6
 	setPwmFrequency(9, 256);	// 122.0703125 Hz to pin 9 & 10
 	setPwmFrequency(3, 256);	// 244.140625 Hz to pin 3 & 11
+#endif
 	MotorController.begin(0);										// Set the initial status of the motors (off)
 	_motorStatus = 0;
 	MotorController.write8(_motorStatus);				// 
@@ -97,12 +102,12 @@ void frontRight(int value, int mode){
   switch(mode){
     case FORWARD:
 			analogWrite(PWM_CONTROL_FRONT_RIGHT, value);
-			_motorStatus = (_motorStatus & (0b00111111) ) | 0x40;
+			_motorStatus = (_motorStatus & (0b00111111) ) | M_RIGHT_FRONT_1;
 			MotorController.write8(_motorStatus);
       break;
     case BACKWARD:
 			analogWrite(PWM_CONTROL_FRONT_RIGHT, value);
-			_motorStatus = (_motorStatus & (0b00111111) ) | 0x80;
+			_motorStatus = (_motorStatus & (0b00111111) ) | M_RIGHT_FRONT_2;
 			MotorController.write8(_motorStatus);
       break;
   }
@@ -112,27 +117,28 @@ void frontLeft(int value, int mode){
   switch(mode){
     case FORWARD:
 			analogWrite(PWM_CONTROL_FRONT_LEFT, value);
-			_motorStatus = (_motorStatus & (0b11001111) ) | 0x10;
+			_motorStatus = (_motorStatus & (0b11001111) ) | M_LEFT_FRONT_1;
 			MotorController.write8(_motorStatus);
       break;
     case BACKWARD:
 			analogWrite(PWM_CONTROL_FRONT_LEFT, value);
-			_motorStatus = (_motorStatus & (0b11001111) ) | 0x20;
+			_motorStatus = (_motorStatus & (0b11001111) ) | M_LEFT_FRONT_2;
 			MotorController.write8(_motorStatus);
       break;
   }
 }
 
+
 void backRight(int value, int mode){
   switch(mode){
     case FORWARD:
 			analogWrite(PWM_CONTROL_BACK_RIGHT, value);
-			_motorStatus = (_motorStatus & (0b11111100) ) | 0x01;
+			_motorStatus = (_motorStatus & (0b11111100) ) | M_RIGHT_BACK_1;
 			MotorController.write8(_motorStatus);
       break;
     case BACKWARD:
 			analogWrite(PWM_CONTROL_BACK_RIGHT, value);
-			_motorStatus = (_motorStatus & (0b11111100) ) | 0x02;
+			_motorStatus = (_motorStatus & (0b11111100) ) | M_RIGHT_BACK_2;
 			MotorController.write8(_motorStatus);
       break;
   }
@@ -142,12 +148,12 @@ void backLeft(int value, int mode){
   switch(mode){
     case FORWARD:
 			analogWrite(PWM_CONTROL_BACK_LEFT, value);
-			_motorStatus = (_motorStatus & (0b11110011) ) | 0x08;
+			_motorStatus = (_motorStatus & (0b11110011) ) | M_LEFT_BACK_1;
 			MotorController.write8(_motorStatus);
       break;
     case BACKWARD:
 			analogWrite(PWM_CONTROL_BACK_LEFT, value);
-			_motorStatus = (_motorStatus & (0b11110011) ) | 0x04;
+			_motorStatus = (_motorStatus & (0b11110011) ) | M_LEFT_BACK_2;
 			MotorController.write8(_motorStatus);
       break;
   }
@@ -156,25 +162,25 @@ void backLeft(int value, int mode){
 void vMotion(int nLeft,int nRight){ // -255 <= nLeft <= 255      -255 <= nRight <= 255
 	if(nRight >= 0){
 		analogWrite(PWM_CONTROL_FRONT_RIGHT, nRight);
-		_motorStatus = (_motorStatus & (0b00111111) ) | ((nRight != 0) ? 0x40 : 0x00);
+		_motorStatus = (_motorStatus & (0b00111111) ) | ((nRight != 0) ? M_RIGHT_FRONT_1 : 0x00);
 		analogWrite(PWM_CONTROL_BACK_RIGHT, nRight);
-		_motorStatus = (_motorStatus & (0b11111100) ) | ((nRight != 0) ? 0x01 : 0x00);
+		_motorStatus = (_motorStatus & (0b11111100) ) | ((nRight != 0) ? M_RIGHT_BACK_1 : 0x00);
 	}else{
 		analogWrite(PWM_CONTROL_FRONT_RIGHT, -nRight);
-		_motorStatus = (_motorStatus & (0b00111111) ) | 0x80;
+		_motorStatus = (_motorStatus & (0b00111111) ) | M_RIGHT_FRONT_2;
 		analogWrite(PWM_CONTROL_BACK_RIGHT, -nRight);
-		_motorStatus = (_motorStatus & (0b11111100) ) | 0x02;
+		_motorStatus = (_motorStatus & (0b11111100) ) | M_RIGHT_BACK_2;
 	}
 	if(nLeft >= 0){
 		analogWrite(PWM_CONTROL_FRONT_LEFT, nLeft);
-		_motorStatus = (_motorStatus & (0b11001111) ) | ((nLeft != 0) ? 0x10 : 0x00);
+		_motorStatus = (_motorStatus & (0b11001111) ) | ((nLeft != 0) ? M_LEFT_FRONT_1 : 0x00);
 		analogWrite(PWM_CONTROL_BACK_LEFT, nLeft);
-		_motorStatus = (_motorStatus & (0b11110011) ) | ((nLeft != 0) ? 0x08 : 0x00);
+		_motorStatus = (_motorStatus & (0b11110011) ) | ((nLeft != 0) ? M_LEFT_BACK_1 : 0x00);
 	}else{
 		analogWrite(PWM_CONTROL_FRONT_LEFT, -nLeft);
-		_motorStatus = (_motorStatus & (0b11001111) ) | 0x20;
+		_motorStatus = (_motorStatus & (0b11001111) ) | M_LEFT_FRONT_2;
 		analogWrite(PWM_CONTROL_BACK_LEFT, -nLeft);
-		_motorStatus = (_motorStatus & (0b11110011) ) | 0x04;
+		_motorStatus = (_motorStatus & (0b11110011) ) | M_LEFT_BACK_2;
 	}
 	MotorController.write8(_motorStatus);
 }
@@ -320,5 +326,18 @@ int nUltrasonicCm(){
 		return 450;
 		
 	return nGd;
+}
+
+unsigned long getMillis(){
+#ifdef ROBOT20
+	return millis();
+#else
+	return millis()<<2; // Multiply by 4
+#endif	
+}
+
+void doDelay(unsigned long msec){
+	unsigned long initialMillis = getMillis();
+	while((getMillis()-initialMillis) < msec);//{Serial.print(millis());Serial.print(" vs ");Serial.println(getMillis());}
 }
 

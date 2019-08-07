@@ -6,6 +6,8 @@
 #ifndef robotcontroller_h
 #define robotcontroller_h
 
+#define ROBOT20
+
 #include <stdint.h>
 #include "Arduino.h"
 #include <Wire.h>
@@ -23,19 +25,41 @@
 
 #ifndef DISPLAY_I2C
 #define DISPLAY_I2C 0x3C
-#endif DISPLAY_I2C
+#endif
 
-#define VERSION 0.05
-
-#define M_RIGHT_FRONT_1 0x01
-#define M_RIGHT_FRONT_2 0x02
-#define M_LEFT_FRONT_1 0x04
-#define M_LEFT_FRONT_2 0x08
-#define M_LEFT_BACK_1 0x10
-#define M_LEFT_BACK_2 0x20
-#define M_RIGHT_BACK_1 0x40
-#define M_RIGHT_BACK_2 0x80
-
+#define VERSION 0.06
+/*
+#ifdef ROBOT20
+	#define M_RIGHT_FRONT_1 0x01
+	#define M_RIGHT_FRONT_2 0x02
+	#define M_LEFT_FRONT_1 0x04
+	#define M_LEFT_FRONT_2 0x08
+	#define M_LEFT_BACK_1 0x20
+	#define M_LEFT_BACK_2 0x10
+	#define M_RIGHT_BACK_1 0x80
+	#define M_RIGHT_BACK_2 0x40
+#else*/
+//#endif
+#ifdef ROBOT20
+	#define M_RIGHT_FRONT_1 0x40
+	#define M_RIGHT_FRONT_2 0x80
+	#define M_LEFT_FRONT_1 0x10
+	#define M_LEFT_FRONT_2 0x20
+	#define M_LEFT_BACK_1 0x04
+	#define M_LEFT_BACK_2 0x08
+	#define M_RIGHT_BACK_1 0x02
+	#define M_RIGHT_BACK_2 0x01
+#else
+	#define M_RIGHT_FRONT_1 0x40
+	#define M_RIGHT_FRONT_2 0x80
+	#define M_LEFT_FRONT_1 0x10
+	#define M_LEFT_FRONT_2 0x20
+	#define M_LEFT_BACK_1 0x08
+	#define M_LEFT_BACK_2 0x04
+	#define M_RIGHT_BACK_1 0x01
+	#define M_RIGHT_BACK_2 0x02
+#endif
+	
 #define FORWARD 0
 #define BACKWARD 1
 
@@ -55,10 +79,17 @@
 #define TRIGGER_PIN 7
 #define ECHO_PIN 8
 
-#define PWM_CONTROL_FRONT_LEFT 9	//490 Hz
-#define PWM_CONTROL_BACK_LEFT 6		//980 Hz
-#define PWM_CONTROL_FRONT_RIGHT 10	//490 Hz
-#define PWM_CONTROL_BACK_RIGHT 3	//490 Hz
+#ifdef ROBOT20
+	#define PWM_CONTROL_FRONT_LEFT 9
+	#define PWM_CONTROL_BACK_LEFT 6
+	#define PWM_CONTROL_FRONT_RIGHT 10
+	#define PWM_CONTROL_BACK_RIGHT 5
+#else
+	#define PWM_CONTROL_FRONT_LEFT 9	//490 Hz
+	#define PWM_CONTROL_BACK_LEFT 6		//980 Hz
+	#define PWM_CONTROL_FRONT_RIGHT 10	//490 Hz
+	#define PWM_CONTROL_BACK_RIGHT 3	//490 Hz
+#endif
 
 void RobotBegin();
 
@@ -92,5 +123,9 @@ int nUltrasonicCm();
 
 uint8_t statusMotor();
 void stopMotors();
+
+// TIME
+unsigned long getMillis();
+void doDelay(unsigned long msec);	// Do a delay of msec milliseconds
 
 #endif
