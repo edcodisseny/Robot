@@ -1,4 +1,4 @@
-# Robot19
+# Robot
 Robot educatiu dissenyat per EDCO disseny.
 
 ## Afegir llibreries
