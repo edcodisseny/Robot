@@ -75,7 +75,10 @@ void setPwmFrequency(int pin, int divisor) {
   }
 }
 
+SoftwareSerial SerialBT(12, 11);// RX, TX
+
 void RobotBegin(){
+    Wire.begin();
 	pinMode(BUTTON_START, INPUT_PULLUP);   	
 	pinMode(PWM_CONTROL_FRONT_LEFT, OUTPUT);   	// Sets the (analog) pin as output
 	pinMode(PWM_CONTROL_BACK_LEFT, OUTPUT);   	// Sets the (analog) pin as output
@@ -91,7 +94,14 @@ void RobotBegin(){
 #endif
 	MotorController.begin(0);										// Set the initial status of the motors (off)
 	_motorStatus = 0;
-	MotorController.write8(_motorStatus);				// 
+	MotorController.write8(_motorStatus);
+	
+	// Set accelerometer
+    I2CwriteByte(MPU9250_ADDRESS, 28, ACC_FULL_SCALE_16_G);
+    // Set gyroscope
+    I2CwriteByte(MPU9250_ADDRESS, 27, GYRO_FULL_SCALE_2000_DPS);
+	
+	SerialBT.begin(9600);	// Initialize bluetooth
 }
 
 uint8_t statusMotor(){
@@ -340,4 +350,111 @@ void doDelay(unsigned long msec){
 	unsigned long initialMillis = getMillis();
 	while((getMillis()-initialMillis) < msec);//{Serial.print(millis());Serial.print(" vs ");Serial.println(getMillis());}
 }
+
+// Bluetooth
+
+void setBTName(String name){
+	SerialBT.print("AT+NAME"+name);
+	for(int i=0; i<9;){	//Wait to receive "OKSetName"
+		if(SerialBT.available()) {
+			Serial.write(SerialBT.read());
+			i++;
+		}
+	}
+	doDelay(1000);
+}
+void setBTPassword(String password){
+	if(password.length() != 4){
+		Serial.println("Password must has 4 digits.");
+		return;
+	}
+	SerialBT.print("AT+PIN"+password);
+	for(int i=0; i<4;){	//Wait to receive "OKSetPassword"
+		while (SerialBT.available()) {
+			Serial.write(SerialBT.read());
+			i++;
+		}
+	}
+}
+
+// I2C
+//Funcion auxiliar lectura
+void I2Cread(uint8_t Address, uint8_t Register, uint8_t Nbytes, uint8_t* Data)
+{
+   Wire.beginTransmission(Address);
+   Wire.write(Register);
+   Wire.endTransmission();
+ 
+   Wire.requestFrom(Address, Nbytes);
+   uint8_t index = 0;
+   while (Wire.available())
+      Data[index++] = Wire.read();
+}
+ 
+ 
+// Funcion auxiliar de escritura
+void I2CwriteByte(uint8_t Address, uint8_t Register, uint8_t Data)
+{
+   Wire.beginTransmission(Address);
+   Wire.write(Register);
+   Wire.write(Data);
+   Wire.endTransmission();
+}
+
+struct MPUCalibration{
+	int16_t ax=0;
+	int16_t ay=0;
+	int16_t az=0;	
+	int16_t gx=0;
+	int16_t gy=0;
+	int16_t gz=0;	
+}sMPUCalibration;
+
+// Acelerometro
+
+void getAccel(int16_t* ax, int16_t* ay, int16_t* az){
+   uint8_t Buf[6];
+   I2Cread(MPU9250_ADDRESS, 0x3B, 6, Buf);
+   // Convertir registros acelerometro
+   *ax = -(Buf[0] << 8 | Buf[1]) + sMPUCalibration.ax;
+   *ay = -(Buf[2] << 8 | Buf[3]) + sMPUCalibration.ay;
+   *az = (Buf[4] << 8 | Buf[5]) + sMPUCalibration.az;
+} 
+
+void calibrateAccel(){
+   uint8_t Buf[6];
+   I2Cread(MPU9250_ADDRESS, 0x3B, 6, Buf);
+   sMPUCalibration.ax = (Buf[0] << 8 | Buf[1]);
+   sMPUCalibration.ay = (Buf[2] << 8 | Buf[3]);
+   sMPUCalibration.az = -(Buf[4] << 8 | Buf[5]);
+}
+
+// Gyroscope
+
+void getGyros(int16_t* gx, int16_t* gy, int16_t* gz){
+   uint8_t Buf[6];
+   I2Cread(MPU9250_ADDRESS, 0x43, 6, Buf);
+   // Convertir registros giroscopio
+   *gx = -(Buf[0] << 8 | Buf[1])+ sMPUCalibration.gx;
+   *gy = -(Buf[2] << 8 | Buf[3])+ sMPUCalibration.gy;
+   *gz = (Buf[4] << 8 | Buf[5]) + sMPUCalibration.gz;
+}
+
+void calibrateGyros(){
+   uint8_t Buf[6];
+   I2Cread(MPU9250_ADDRESS, 0x43, 6, Buf);
+   sMPUCalibration.gx = (Buf[0] << 8 | Buf[1]);
+   sMPUCalibration.gy = (Buf[2] << 8 | Buf[3]);
+   sMPUCalibration.gz = -(Buf[4] << 8 | Buf[5]);
+}
+
+void getAccelGyros(int16_t* ax, int16_t* ay, int16_t* az, int16_t* gx, int16_t* gy, int16_t* gz){
+	getAccel(ax, ay, az);
+	getGyros(gx, gy, gz);
+} 
+void calibrateAccelGyros(){
+   calibrateAccel();
+   calibrateGyros();
+}
+
 

@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include "Arduino.h"
 #include <Wire.h>
+#include <SoftwareSerial.h>
 #include "PCF8574.h"
 // Pantalla OLED
 #include <Adafruit_GFX.h>
@@ -91,6 +92,22 @@
 	#define PWM_CONTROL_BACK_RIGHT 3	//490 Hz
 #endif
 
+// Gyroscope
+#define    MPU9250_ADDRESS            0x68
+ 
+#define    GYRO_FULL_SCALE_250_DPS    0x00  
+#define    GYRO_FULL_SCALE_500_DPS    0x08
+#define    GYRO_FULL_SCALE_1000_DPS   0x10
+#define    GYRO_FULL_SCALE_2000_DPS   0x18
+ 
+#define    ACC_FULL_SCALE_2_G        0x00  
+#define    ACC_FULL_SCALE_4_G        0x08
+#define    ACC_FULL_SCALE_8_G        0x10
+#define    ACC_FULL_SCALE_16_G       0x18
+
+extern SoftwareSerial SerialBT; 
+
+
 void RobotBegin();
 
 //* CONTROL OF MOTORS 
@@ -127,5 +144,22 @@ void stopMotors();
 // TIME
 unsigned long getMillis();
 void doDelay(unsigned long msec);	// Do a delay of msec milliseconds
+
+// Bluetooth
+void setBTName(String name);
+void setBTPassword(String password);
+
+// I2C
+void I2Cread(uint8_t Address, uint8_t Register, uint8_t Nbytes, uint8_t* Data);
+void I2CwriteByte(uint8_t Address, uint8_t Register, uint8_t Data);
+
+
+//MPU9250
+void getAccel(int16_t* ax, int16_t* ay, int16_t* az);
+void getGyros(int16_t* gx, int16_t* gy, int16_t* gz);
+void getAccelGyros(int16_t* ax, int16_t* ay, int16_t* az, int16_t* gx, int16_t* gy, int16_t* gz);
+void calibrateAccelGyros();
+void calibrateGyros();
+void calibrateAccel();
 
 #endif
