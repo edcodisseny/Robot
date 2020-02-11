@@ -12,5 +12,13 @@ A Linux la carpeta d'Arduino la pots trobar amb el comandament:
 whereis Arduino
 ```
 ### Mac
-A Mac la carpeta d'Arduino la pots trobar als programes instalats, i modificar les llibreries amb clic dret i seleccionant "Mostrar contingut del paquet".
+A Mac la carpeta d'Arduino la pots trobar als programes instalats, modificar les llibreries amb clic dret i seleccionant "Mostrar contingut del paquet".
 
+Afegir llibreríes a la ruta:
+```
+/Applications/Arduino.app/Contents/Java/libraries
+```
+o si tens una ruta diferent, dins d'Arduino.app:
+```
+Contents/Java/libraries
+```
